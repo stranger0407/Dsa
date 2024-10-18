@@ -1,0 +1,155 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+const char PLAYER = 'X'; // Human player
+const char AI = 'O';     // AI player
+const char EMPTY = ' ';  // Empty cell
+
+class TicTacToe {
+private:
+    vector<vector<char>> board;
+    
+public:
+    TicTacToe() : board(3, vector<char>(3, EMPTY)) {}
+
+    void printBoard() {
+        for (const auto& row : board) {
+            for (char cell : row) {
+                cout << cell << " ";
+            }
+            cout << endl;
+        }
+    }
+
+    bool isFull() {
+        for (const auto& row : board) {
+            for (char cell : row) {
+                if (cell == EMPTY) return false;
+            }
+        }
+        return true;
+    }
+
+    bool checkWin(char player) {
+        // Check rows and columns
+        for (int i = 0; i < 3; i++) {
+            if ((board[i][0] == player && board[i][1] == player && board[i][2] == player) ||
+                (board[0][i] == player && board[1][i] == player && board[2][i] == player)) {
+                return true;
+            }
+        }
+        // Check diagonals
+        if ((board[0][0] == player && board[1][1] == player && board[2][2] == player) ||
+            (board[0][2] == player && board[1][1] == player && board[2][0] == player)) {
+            return true;
+        }
+        return false;
+    }
+
+    int minimax(int depth, bool isMaximizing) {
+        if (checkWin(AI)) return 10 - depth; // AI wins
+        if (checkWin(PLAYER)) return depth - 10; // Player wins
+        if (isFull()) return 0; // Draw
+
+        if (isMaximizing) {
+            int bestScore = numeric_limits<int>::min();
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j] == EMPTY) {
+                        board[i][j] = AI;
+                        int score = minimax(depth + 1, false);
+                        board[i][j] = EMPTY; // Undo the move
+                        bestScore = max(bestScore, score);
+                    }
+                }
+            }
+            return bestScore;
+        } else {
+            int bestScore = numeric_limits<int>::max();
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (board[i][j] == EMPTY) {
+                        board[i][j] = PLAYER;
+                        int score = minimax(depth + 1, true);
+                        board[i][j] = EMPTY; // Undo the move
+                        bestScore = min(bestScore, score);
+                    }
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    pair<int, int> bestMove() {
+        int bestScore = numeric_limits<int>::min();
+        pair<int, int> move = {-1, -1};
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == EMPTY) {
+                    board[i][j] = AI;
+                    int score = minimax(0, false);
+                    board[i][j] = EMPTY; // Undo the move
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = {i, j};
+                    }
+                }
+            }
+        }
+        return move;
+    }
+
+    void playGame() {
+        while (true) {
+            printBoard();
+            // Player's turn
+            int row, col;
+            cout << "Enter your move (row and column): ";
+            cin >> row >> col;
+
+            if (row < 0 || row >= 3 || col < 0 || col >= 3 || board[row][col] != EMPTY) {
+                cout << "Invalid move! Try again.\n";
+                continue;
+            }
+            board[row][col] = PLAYER;
+
+            if (checkWin(PLAYER)) {
+                printBoard();
+                cout << "Player wins!\n";
+                return;
+            }
+
+            if (isFull()) {
+                printBoard();
+                cout << "It's a draw!\n";
+                return;
+            }
+
+            // AI's turn
+            pair<int, int> aiMove = bestMove();
+            board[aiMove.first][aiMove.second] = AI;
+
+            if (checkWin(AI)) {
+                printBoard();
+                cout << "AI wins!\n";
+                return;
+            }
+
+            if (isFull()) {
+                printBoard();
+                cout << "It's a draw!\n";
+                return;
+            }
+        }
+    }
+};
+
+int main() {
+    TicTacToe game;
+    game.playGame();
+    return 0;
+}
